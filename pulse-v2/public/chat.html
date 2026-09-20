@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pulse</title>
+  <script src="theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <aside class="side">
+    <div class="side-head">
+      <div id="meAv"></div>
+      <div class="who"><b id="meName"></b><span id="meStatus">Connecting…</span></div>
+      <button class="icon-btn" id="themeBtn" aria-label="Switch light or dark theme"></button>
+      <button class="icon-btn" id="logoutBtn" data-icon="logout" aria-label="Sign out" title="Sign out"></button>
+    </div>
+    <div class="search">
+      <span data-icon="search"></span>
+      <input id="q" type="search" placeholder="Search people" aria-label="Search people" autocomplete="off">
+    </div>
+    <div class="list" id="list"></div>
+  </aside>
+
+  <section class="main" id="main">
+    <div class="empty" id="empty">
+      <div class="logo" data-icon="bubble"></div>
+      <h3>Pulse</h3>
+      <p>Pick someone from the list to send a message, record a voice note, or start a call.</p>
+    </div>
+
+    <div class="chat hidden" id="chat">
+      <header class="chat-head">
+        <button class="icon-btn back" id="backBtn" data-icon="back" aria-label="Back to chats"></button>
+        <div id="headAv"></div>
+        <div class="who"><b id="headName"></b><span id="headSub"></span></div>
+        <div class="actions">
+          <button class="icon-btn" id="voiceCallBtn" data-icon="phone" aria-label="Voice call" title="Voice call"></button>
+          <button class="icon-btn" id="videoCallBtn" data-icon="video" aria-label="Video call" title="Video call"></button>
+        </div>
+      </header>
+
+      <div class="messages" id="messages" aria-live="polite"></div>
+
+      <div class="composer" id="composer">
+        <div class="emoji-pop hidden" id="emojiPop"></div>
+        <div class="field-box">
+          <button class="icon-btn" id="emojiBtn" data-icon="smile" aria-label="Emoji"></button>
+          <textarea id="input" rows="1" placeholder="Type a message" aria-label="Message"></textarea>
+          <button class="icon-btn" id="photoBtn" data-icon="image" aria-label="Send a photo"></button>
+          <input type="file" id="photoInput" accept="image/*" hidden>
+        </div>
+        <button class="round mic" id="micBtn" data-icon="mic" aria-label="Record a voice message"></button>
+        <button class="round hidden" id="sendBtn" data-icon="send" aria-label="Send message"></button>
+
+        <div class="recbar">
+          <button class="icon-btn" id="recCancel" data-icon="trash" aria-label="Discard recording"></button>
+          <span class="rdot"></span>
+          <span class="rtime" id="recTime">0:00</span>
+          <span class="rhint">Recording…</span>
+          <button class="round" id="recSend" data-icon="send" aria-label="Send voice message"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Active call -->
+<div class="call hidden voice-only" id="call">
+  <video class="remote" id="remoteVideo" autoplay playsinline></video>
+  <div class="shade"></div>
+  <div class="bigav" id="callAv"></div>
+  <div class="info"><b id="callName"></b><span id="callStatus"></span></div>
+  <video class="local" id="localVideo" autoplay playsinline muted></video>
+  <div class="controls">
+    <button class="cbtn" id="muteBtn" data-icon="mic" aria-label="Mute microphone"></button>
+    <button class="cbtn" id="camBtn" data-icon="video" aria-label="Turn camera off"></button>
+    <button class="cbtn end" id="endBtn" data-icon="phone" aria-label="End call"></button>
+  </div>
+</div>
+
+<!-- Incoming call -->
+<div class="incoming hidden" id="incoming" role="alertdialog" aria-label="Incoming call">
+  <div id="incAv"></div>
+  <div class="t"><b id="incName"></b><span id="incKind"></span></div>
+  <button class="cbtn decline" id="declineBtn" data-icon="phone" aria-label="Decline call"></button>
+  <button class="cbtn accept" id="acceptBtn" data-icon="phone" aria-label="Accept call"></button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="common.js"></script>
+<script src="chat.js"></script>
+</body>
+</html>

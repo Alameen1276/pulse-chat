@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pulse — Join</title>
+  <script src="theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="join">
+  <section class="stage" aria-label="About Pulse">
+    <div class="brand-row">
+      <div class="logo" id="logo"></div>
+      Pulse
+    </div>
+
+    <div>
+      <h1>Say it, send it, or call it.</h1>
+      <p class="lead">Messages, voice notes, photos, and voice or video calls, all in one conversation.</p>
+    </div>
+
+    <div class="mock" aria-hidden="true">
+      <div class="mb in">Are you free for a quick call?</div>
+      <div class="mb out voice">
+        <span class="p"><svg viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg></span>
+        <span class="bars" id="mockBars"></span>
+        <span>0:07</span>
+      </div>
+      <div class="mb call" id="mockCall"><span id="mockCallIcon"></span>Video call · 04:12</div>
+      <div class="mb out">Perfect, joining now</div>
+    </div>
+  </section>
+
+  <section class="join-side">
+    <button class="icon-btn theme-fab" id="themeBtn" aria-label="Switch light or dark theme"></button>
+
+    <div class="card" id="card"></div>
+  </section>
+</main>
+
+<script src="common.js"></script>
+<script>
+  // Decorative bits
+  document.getElementById('logo').append(icon('bubble'));
+  document.getElementById('mockCallIcon').append(icon('video'));
+  const bars = document.getElementById('mockBars');
+  [8,14,20,12,22,16,9,18,24,14,8,17,21,11,15,7].forEach(v => bars.append(h('i', { style: `height:${v}px` })));
+
+  const themeBtn = document.getElementById('themeBtn');
+  const paintTheme = () => { themeBtn.replaceChildren(icon(currentTheme() === 'dark' ? 'sun' : 'moon')); };
+  themeBtn.onclick = () => { setTheme(currentTheme() === 'dark' ? 'light' : 'dark'); paintTheme(); };
+  paintTheme();
+
+  // Join logic
+  const card = document.getElementById('card');
+  const saved = getProfile();
+
+  function go(profile, remember) {
+    saveProfile(profile, remember);
+    location.href = 'chat.html';
+  }
+
+  function showWelcome() {
+    card.replaceChildren(
+      h('h2', { text: 'Welcome back' }),
+      h('p', { class: 'sub', text: 'You are signed in on this device.' }),
+      h('div', { class: 'welcome' },
+        avatarEl(saved, 60),
+        h('div', {}, h('b', { text: saved.name }), h('span', { text: 'Saved on this device' }))
+      ),
+      h('button', { class: 'btn primary', text: 'Continue as ' + saved.name, onclick: () => go(saved, !!localStorage.getItem(PROFILE_KEY)) }),
+      h('button', { class: 'btn ghost', style: 'width:100%;margin-top:6px', text: 'Use a different name', onclick: () => showForm('') })
+    );
+  }
+
+  function showForm(prefill) {
+    let color = saved && prefill ? saved.color : COLORS[Math.floor(Math.random() * COLORS.length)];
+    let remember = true;
+
+    const input = h('input', { class: 'text-in', id: 'name', type: 'text', maxlength: '24', placeholder: 'e.g. Al-ameen', autocomplete: 'nickname', value: prefill || '' });
+    const err = h('div', { class: 'err', role: 'alert' });
+    const preview = h('div', {});
+    const swatchWrap = h('div', { class: 'swatches', role: 'radiogroup', 'aria-label': 'Avatar color' });
+    const tog = h('button', { type: 'button', class: 'tog', role: 'switch', 'aria-checked': 'true', 'aria-label': 'Remember me on this device' });
+
+    function paint() {
+      preview.replaceChildren(avatarEl({ name: input.value || '?', color }, 52));
+      [...swatchWrap.children].forEach(s => s.setAttribute('aria-checked', String(s.dataset.c === color)));
+    }
+    COLORS.forEach(c => swatchWrap.append(h('button', { type: 'button', class: 'swatch', role: 'radio', 'data-c': c, 'aria-label': c, style: `background:${c}`, onclick: () => { color = c; paint(); } })));
+    tog.onclick = () => { remember = !remember; tog.setAttribute('aria-checked', String(remember)); };
+    input.addEventListener('input', () => { err.textContent = ''; paint(); });
+
+    function submit(e) {
+      e.preventDefault();
+      const name = input.value.trim();
+      if (name.length < 2) { err.textContent = 'Enter a name with at least 2 characters.'; input.focus(); return; }
+      go({ id: uid(), name, color }, remember);
+    }
+
+    const form = h('form', { onsubmit: submit, novalidate: true },
+      h('div', { class: 'field' },
+        h('label', { for: 'name', text: 'Your name' }),
+        h('div', { class: 'input-wrap' }, preview, input),
+        err
+      ),
+      h('div', { class: 'field', style: 'margin-top:8px' }, h('span', { class: 'lab', text: 'Avatar color' }), swatchWrap),
+      h('div', { class: 'switch' },
+        h('div', {}, h('b', { text: 'Remember me' }), h('span', { text: 'Skip this screen next time on this device' })),
+        tog
+      ),
+      h('button', { class: 'btn primary', type: 'submit', text: 'Start chatting' })
+    );
+
+    card.replaceChildren(
+      h('h2', { text: 'Create your profile' }),
+      h('p', { class: 'sub', text: 'Pick the name people will see in their contact list.' }),
+      form
+    );
+    paint();
+    input.focus();
+  }
+
+  saved ? showWelcome() : showForm('');
+</script>
+</body>
+</html>
