@@ -1,3 +1,12 @@
+/*
+      /\   //  //
+     /  \ //  //
+    /    \\  //
+   /______\ //
+    AL-AMEEN
+   CODE • BUILD • CREATE • IMPROVE
+      @alameen.dev
+*/
 (() => {
   'use strict';
 
@@ -701,8 +710,12 @@
   };
 
   socket.on('connect', () => {
-    socket.emit('join', me, (res) => {
-      if (!res?.ok) { toast(res?.error || 'Could not join. Go back and check your name.'); return; }
+    socket.emit('join', { id: me.id, token: me.token }, (res) => {
+      if (!res?.ok) {
+        if (res?.auth) { clearProfile(); location.replace('index.html'); return; }
+        toast(res?.error || 'Could not join. Please try again.');
+        return;
+      }
       setConn(true);
       state.users = new Map(res.users.map((u) => [u.id, u]));
       for (const [k, v] of Object.entries(res.summary)) state.chats[k] = v;
@@ -782,6 +795,7 @@
 
   $('#logoutBtn').onclick = () => {
     if (call) endCall(true, 'missed');
+    fetch('/api/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: me.token }) }).catch(() => {});
     clearProfile();
     socket.disconnect();
     location.href = 'index.html';

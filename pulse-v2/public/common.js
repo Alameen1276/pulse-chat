@@ -1,3 +1,12 @@
+/*
+      /\   //  //
+     /  \ //  //
+    /    \\  //
+   /______\ //
+    AL-AMEEN
+   CODE • BUILD • CREATE • IMPROVE
+      @alameen.dev
+*/
 /* Shared helpers for both pages */
 const COLORS = ['#14a06f', '#2f7de1', '#7c5cdb', '#d6478a', '#d97706', '#dc3f3f', '#0e91b8', '#5b6b7a'];
 
@@ -75,7 +84,7 @@ function getProfile() {
   for (const st of [localStorage, sessionStorage]) {
     try {
       const p = JSON.parse(st.getItem(PROFILE_KEY));
-      if (p && p.id && p.name) return p;
+      if (p && p.id && p.name && p.token) return p;
     } catch (e) {}
   }
   return null;

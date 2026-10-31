@@ -335,3 +335,9 @@ svg.i { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
   .mb { opacity: 1; }
 }
+
+/* ---------- Login / Sign up tabs ---------- */
+.tabs { display: flex; gap: 4px; margin-top: 22px; padding: 4px; background: var(--panel-2); border: 1.5px solid var(--line); border-radius: 12px; }
+.tabs button { flex: 1; height: 40px; border: 0; border-radius: 9px; background: none; color: var(--muted); font: 600 14px var(--font-body); cursor: pointer; }
+.tabs button[aria-selected='true'] { background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+.card .field.tight { margin-top: 16px; }

@@ -1,9 +1,18 @@
+<!--
+      /\   //  //
+     /  \ //  //
+    /    \\  //
+   /______\ //
+    AL-AMEEN
+   CODE • BUILD • CREATE • IMPROVE
+      @alameen.dev
+-->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pulse — Join</title>
+  <title>Pulse — Log in</title>
   <script src="theme-init.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,9 +64,19 @@
   themeBtn.onclick = () => { setTheme(currentTheme() === 'dark' ? 'light' : 'dark'); paintTheme(); };
   paintTheme();
 
-  // Join logic
+  // Join logic: sign up / log in
   const card = document.getElementById('card');
   const saved = getProfile();
+
+  async function api(path, body) {
+    let res;
+    try {
+      res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    } catch (e) {
+      return { ok: false, error: 'Cannot reach the server. Check your internet and try again.' };
+    }
+    try { return await res.json(); } catch (e) { return { ok: false, error: 'Something went wrong. Try again.' }; }
+  }
 
   function go(profile, remember) {
     saveProfile(profile, remember);
@@ -73,59 +92,79 @@
         h('div', {}, h('b', { text: saved.name }), h('span', { text: 'Saved on this device' }))
       ),
       h('button', { class: 'btn primary', text: 'Continue as ' + saved.name, onclick: () => go(saved, !!localStorage.getItem(PROFILE_KEY)) }),
-      h('button', { class: 'btn ghost', style: 'width:100%;margin-top:6px', text: 'Use a different name', onclick: () => showForm('') })
+      h('button', { class: 'btn ghost', style: 'width:100%;margin-top:6px', text: 'Use a different account', onclick: () => showForm('login') })
     );
   }
 
-  function showForm(prefill) {
-    let color = saved && prefill ? saved.color : COLORS[Math.floor(Math.random() * COLORS.length)];
+  function showForm(mode) {
+    const signup = mode === 'signup';
+    let color = COLORS[Math.floor(Math.random() * COLORS.length)];
     let remember = true;
 
-    const input = h('input', { class: 'text-in', id: 'name', type: 'text', maxlength: '24', placeholder: 'e.g. Al-ameen', autocomplete: 'nickname', value: prefill || '' });
+    const nameIn = h('input', { class: 'text-in', id: 'name', type: 'text', maxlength: '24', placeholder: 'e.g. Al-ameen', autocomplete: 'username' });
+    const passIn = h('input', { class: 'text-in', id: 'pass', type: 'password', maxlength: '100', placeholder: signup ? 'At least 6 characters' : 'Your password', autocomplete: signup ? 'new-password' : 'current-password' });
     const err = h('div', { class: 'err', role: 'alert' });
     const preview = h('div', {});
     const swatchWrap = h('div', { class: 'swatches', role: 'radiogroup', 'aria-label': 'Avatar color' });
     const tog = h('button', { type: 'button', class: 'tog', role: 'switch', 'aria-checked': 'true', 'aria-label': 'Remember me on this device' });
+    const submitBtn = h('button', { class: 'btn primary', type: 'submit', text: signup ? 'Create account' : 'Log in' });
 
     function paint() {
-      preview.replaceChildren(avatarEl({ name: input.value || '?', color }, 52));
-      [...swatchWrap.children].forEach(s => s.setAttribute('aria-checked', String(s.dataset.c === color)));
+      preview.replaceChildren(avatarEl({ name: nameIn.value || '?', color }, 52));
+      [...swatchWrap.children].forEach((sw) => sw.setAttribute('aria-checked', String(sw.dataset.c === color)));
     }
-    COLORS.forEach(c => swatchWrap.append(h('button', { type: 'button', class: 'swatch', role: 'radio', 'data-c': c, 'aria-label': c, style: `background:${c}`, onclick: () => { color = c; paint(); } })));
+    COLORS.forEach((c) => swatchWrap.append(h('button', { type: 'button', class: 'swatch', role: 'radio', 'data-c': c, 'aria-label': c, style: `background:${c}`, onclick: () => { color = c; paint(); } })));
     tog.onclick = () => { remember = !remember; tog.setAttribute('aria-checked', String(remember)); };
-    input.addEventListener('input', () => { err.textContent = ''; paint(); });
+    nameIn.addEventListener('input', () => { err.textContent = ''; paint(); });
+    passIn.addEventListener('input', () => { err.textContent = ''; });
 
-    function submit(e) {
+    async function submit(e) {
       e.preventDefault();
-      const name = input.value.trim();
-      if (name.length < 2) { err.textContent = 'Enter a name with at least 2 characters.'; input.focus(); return; }
-      go({ id: uid(), name, color }, remember);
+      const name = nameIn.value.trim();
+      const password = passIn.value;
+      if (name.length < 2) { err.textContent = 'Enter a name with at least 2 characters.'; nameIn.focus(); return; }
+      if (signup && password.length < 6) { err.textContent = 'Your password must be at least 6 characters.'; passIn.focus(); return; }
+      if (!signup && !password) { err.textContent = 'Enter your password.'; passIn.focus(); return; }
+      submitBtn.disabled = true;
+      const res = await api(signup ? '/api/signup' : '/api/login', signup ? { name, password, color } : { name, password });
+      if (!res.ok) { err.textContent = res.error || 'Something went wrong. Try again.'; submitBtn.disabled = false; return; }
+      go(res.profile, remember);
     }
+
+    const tabs = h('div', { class: 'tabs', role: 'tablist' },
+      h('button', { type: 'button', role: 'tab', 'aria-selected': String(!signup), text: 'Log in', onclick: () => showForm('login') }),
+      h('button', { type: 'button', role: 'tab', 'aria-selected': String(signup), text: 'Sign up', onclick: () => showForm('signup') })
+    );
 
     const form = h('form', { onsubmit: submit, novalidate: true },
-      h('div', { class: 'field' },
+      h('div', { class: 'field tight' },
         h('label', { for: 'name', text: 'Your name' }),
-        h('div', { class: 'input-wrap' }, preview, input),
+        h('div', { class: 'input-wrap' }, signup ? preview : null, nameIn)
+      ),
+      h('div', { class: 'field tight' },
+        h('label', { for: 'pass', text: 'Password' }),
+        passIn,
         err
       ),
-      h('div', { class: 'field', style: 'margin-top:8px' }, h('span', { class: 'lab', text: 'Avatar color' }), swatchWrap),
+      signup ? h('div', { class: 'field tight' }, h('span', { class: 'lab', text: 'Avatar color' }), swatchWrap) : null,
       h('div', { class: 'switch' },
-        h('div', {}, h('b', { text: 'Remember me' }), h('span', { text: 'Skip this screen next time on this device' })),
+        h('div', {}, h('b', { text: 'Remember me' }), h('span', { text: 'Stay signed in on this device' })),
         tog
       ),
-      h('button', { class: 'btn primary', type: 'submit', text: 'Start chatting' })
+      submitBtn
     );
 
     card.replaceChildren(
-      h('h2', { text: 'Create your profile' }),
-      h('p', { class: 'sub', text: 'Pick the name people will see in their contact list.' }),
+      h('h2', { text: signup ? 'Create your account' : 'Welcome back' }),
+      h('p', { class: 'sub', text: signup ? 'Pick a name and a password. Your name is how friends find you.' : 'Log in with your name and password.' }),
+      tabs,
       form
     );
     paint();
-    input.focus();
+    nameIn.focus();
   }
 
-  saved ? showWelcome() : showForm('');
+  saved ? showWelcome() : showForm('login');
 </script>
 </body>
 </html>

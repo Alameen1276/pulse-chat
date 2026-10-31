@@ -1,7 +1,7 @@
 {
   "name": "pulse-v2",
-  "version": "2.0.0",
-  "description": "WhatsApp-style real-time chat with voice notes, photos and voice/video calls",
+  "version": "3.0.0",
+  "description": "WhatsApp-style real-time chat with accounts, saved messages, voice notes, photos and calls",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
+    "mongodb": "^6.8.0",
     "socket.io": "^4.7.5"
   }
 }
