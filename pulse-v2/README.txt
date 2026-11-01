@@ -11,6 +11,10 @@ RUN IT LOCALLY (Windows PowerShell)
   2. npm install
   3. npm start     (without a database, data is kept in memory only)
 
+FOR CALLS BETWEEN DIFFERENT NETWORKS
+  Add two Render environment variables from your Metered.ca account:
+  METERED_APP_NAME (e.g. trustbyte) and METERED_API_KEY
+
 TO SAVE DATA PERMANENTLY
   Set an environment variable called MONGODB_URI to your Atlas connection string
   (starts with mongodb+srv://). On Render: Environment -> Add Environment Variable.

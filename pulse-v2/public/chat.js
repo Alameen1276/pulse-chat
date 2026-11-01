@@ -477,6 +477,13 @@
      Calls (WebRTC; the socket only carries the handshake)
   ------------------------------------------------------------------ */
   const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+  // Ask the server for call-relay (TURN) servers so calls also connect across different networks
+  const loadIce = () => fetch('/api/ice', { headers: { Authorization: 'Bearer ' + me.token } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((list) => { if (Array.isArray(list) && list.length) ICE.iceServers = list; })
+    .catch(() => {});
+  loadIce();
+  setInterval(loadIce, 10 * 60 * 1000);
   let call = null;      // the call in progress (or ringing out)
   let incoming = null;  // an offer waiting for accept / decline
 

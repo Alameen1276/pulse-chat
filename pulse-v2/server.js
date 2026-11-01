@@ -168,6 +168,36 @@ app.post('/api/logout', (req, res) => {
 });
 
 /* ------------------------------------------------------------------
+   Call relay (TURN). Needed so calls connect between different networks.
+   Set METERED_APP_NAME and METERED_API_KEY in Render. Without them,
+   Pulse falls back to free STUN only (calls work on the same network).
+------------------------------------------------------------------ */
+const STUN = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+let iceCache = { at: 0, servers: STUN };
+
+app.get('/api/ice', async (req, res) => {
+  const bearer = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!bearer || !sessions.has(sha(bearer))) return res.status(401).json({ ok: false });
+
+  const appName = String(process.env.METERED_APP_NAME || '').trim().replace(/^https?:\/\//, '').replace(/\.metered\.live.*$/, '');
+  const apiKey = String(process.env.METERED_API_KEY || '').trim();
+  if (!appName || !apiKey) return res.json(STUN);
+  if (Date.now() - iceCache.at < 10 * 60 * 1000) return res.json(iceCache.servers);
+
+  try {
+    const r = await fetch(`https://${encodeURIComponent(appName)}.metered.live/api/v1/turn/credentials?apiKey=${encodeURIComponent(apiKey)}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const servers = await r.json();
+    if (!Array.isArray(servers) || !servers.length) throw new Error('empty reply');
+    iceCache = { at: Date.now(), servers };
+    res.json(servers);
+  } catch (e) {
+    console.error('TURN lookup failed, using STUN only:', e.message);
+    res.json(STUN);
+  }
+});
+
+/* ------------------------------------------------------------------
    Chat
 ------------------------------------------------------------------ */
 // Small version of a message (no audio/photo data) for chat-list previews
